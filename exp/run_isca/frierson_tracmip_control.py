@@ -21,7 +21,7 @@ cb.compile()  # compile the source code to working directory $GFDL_WORK/codebase
 
 # create an Experiment object to handle the configuration of model parameters
 # and output diagnostics
-exp = Experiment('frierson_TracMIP_control', codebase=cb)
+exp = Experiment('frierson_Q50', codebase=cb)
 
 #Tell model how to write diagnostics
 diag = DiagTable()
@@ -41,15 +41,16 @@ diag.add_field('dynamics', 'temp', time_avg=True)
 diag.add_field('dynamics', 'vor', time_avg=True)
 diag.add_field('dynamics', 'div', time_avg=True)
 diag.add_field('mixed_layer', 't_surf', time_avg=True)
+diag.add_field('mixed_layer', 'flux_oceanq', time_avg=True)
 diag.add_field('mixed_layer', 'flux_t', time_avg=True) #senseible heat flux
 diag.add_field('mixed_layer', 'flux_lhe', time_avg=True) # latent heat flux
 diag.add_field('atmosphere', 'precipitation', time_avg=True)
+diag.add_field('two_stream', 'flux_sw', time_avg=True) # shortwave
 diag.add_field('two_stream', 'flux_lw', time_avg=True) # longwave
 diag.add_field('two_stream', 'lwdn_sfc', time_avg=True) # longwave
 diag.add_field('two_stream', 'lwup_sfc', time_avg=True) # longwave
-#diag.add_field('two_stream', 'flux_sw', time_avg=True) # net shortwave in all levels
-#diag.add_field('two_stream', 'swdn_sfc', time_avg=True) # absorted shortwave on the surface longwave
-#diag.add_field('mixed_layer', 'flux_oceanq', time_avg=True)
+diag.add_field('two_stream', 'swdn_sfc', time_avg=True) # longwave
+###module/field_name (two_stream_gray_rad/lwup_sfc) NOT registered
 
 exp.diag_table = diag
 
@@ -74,7 +75,7 @@ exp.namelist = namelist = Namelist({
         'mixed_layer_bc':True,
         'do_virtual' :False,
         'do_simple': True,
-        'roughness_mom':3.21e-05, #This follow Frierson 
+        'roughness_mom':3.21e-05,
         'roughness_heat':3.21e-05,
         'roughness_moist':3.21e-05,                
         'two_stream_gray': True,     #Use grey radiation
@@ -104,14 +105,20 @@ exp.namelist = namelist = Namelist({
         'idealized_moist_model': True
     },
 
+    #Use a large mixed-layer depth, and the Albedo of the CTRL case in Jucker & Gerber, 2017
     'mixed_layer_nml': {
         'tconst' : 285.,
         'prescribe_initial_dist':True,
         'evaporation':True,   
-        'depth': 30,                          #Depth of mixed layer used
-        'albedo_value': 0.06,                  #Albedo value used             
-        'do_qflux':False,
+        'depth': 2.5,                          #Depth of mixed layer used
+        'albedo_value': 0.31,                  #Albedo value used             
+        'do_qflux': True,
         'load_qflux':False,
+    },
+
+    'qflux_nml': {
+        'qflux_amp': 50.0,
+        'qflux_width': 16.0,
     },
 
     'qe_moist_convection_nml': {
@@ -144,13 +151,8 @@ exp.namelist = namelist = Namelist({
 
     'two_stream_gray_rad_nml': {
         'rad_scheme': 'frierson',            #Select radiation scheme to use, which in this case is Frierson
-        'do_seasonal':True,                #do_seasonal=false uses the p2 insolation profile from Frierson 2006. do_seasonal=True uses the GFDL astronomy module to calculate seasonally-varying insolation.
+        'do_seasonal': False,                #do_seasonal=false uses the p2 insolation profile from Frierson 2006. do_seasonal=True uses the GFDL astronomy module to calculate seasonally-varying insolation.
         'atm_abs': 0.2,                      # default: 0.0        
-        'solar_constant':1365.,
-    },
-
-    'astronomy_mod_nml': {
-        'obliq':23.5,
     },
 
     # FMS Framework configuration
@@ -189,7 +191,7 @@ exp.namelist = namelist = Namelist({
 #RESOLUTION = 'T170', 25
 RESOLUTION = 'T85', 25
 exp.set_resolution(*RESOLUTION)
-NCORES = 4
+#NCORES = 32
 
 #Lets do a run!
 if __name__=="__main__":
