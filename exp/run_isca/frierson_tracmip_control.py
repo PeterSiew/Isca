@@ -189,7 +189,6 @@ exp.namelist = namelist = Namelist({
 #RESOLUTION = 'T170', 25
 RESOLUTION = 'T85', 25
 exp.set_resolution(*RESOLUTION)
-
 NCORES = 4
 
 #Lets do a run!
