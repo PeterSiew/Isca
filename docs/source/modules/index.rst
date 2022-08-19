@@ -16,6 +16,8 @@ Components of Isca
    idealised_moist_phys
    two_stream_gray_rad
    convection_simple_betts_miller
+   lscale_cond
+   topography
    socrates
    mixedlayer
    surface_flux
